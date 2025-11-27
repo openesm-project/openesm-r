@@ -1,3 +1,9 @@
+# openesm 0.1.2
+
+## Bug fixes
+* Replaced `zen4R` dependency with internal `httr2` implementation to fix issues with versioning in Zenodo API
+
+
 # openesm 0.1.1
 
 ## Bug fixes

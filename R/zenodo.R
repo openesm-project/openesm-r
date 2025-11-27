@@ -1,3 +1,79 @@
+#' Get all versions for a Zenodo record
+#'
+#' @param zenodo_doi Character string with the Zenodo concept DOI
+#' @param sandbox Logical, whether to use Zenodo sandbox
+#' @return Dataframe with version information (id, version, doi, date)
+#' @keywords internal
+#' @importFrom httr2 request req_perform resp_body_json resp_status
+#' @importFrom cli cli_abort
+#' @noRd
+get_zenodo_versions <- function(zenodo_doi, sandbox = FALSE) {
+  # extract record ID from DOI
+  record_id <- sub(".*zenodo\\.", "", zenodo_doi)
+  
+  base_url <- if (sandbox) {
+    "https://sandbox.zenodo.org/api"
+  } else {
+    "https://zenodo.org/api"
+  }
+  
+  # get the record to find the versions link
+  single_record_url <- paste0(base_url, "/records/", record_id)
+  
+  response <- httr2::request(single_record_url) |>
+    httr2::req_timeout(30) |>
+    httr2::req_perform()
+  
+  if (httr2::resp_status(response) != 200) {
+    cli::cli_abort("Failed to fetch Zenodo record {record_id}")
+  }
+  
+  single_record_data <- httr2::resp_body_json(response)
+  
+  # use the versions link from the API response
+  versions_url <- single_record_data$links$versions
+  
+  if (is.null(versions_url)) {
+    cli::cli_abort("Could not find versions link for record {record_id}")
+  }
+  
+  # get all versions
+  response <- httr2::request(versions_url) |>
+    httr2::req_timeout(30) |>
+    httr2::req_perform()
+  
+  if (httr2::resp_status(response) != 200) {
+    cli::cli_abort("Failed to fetch Zenodo versions")
+  }
+  
+  data <- httr2::resp_body_json(response)
+  
+  # extract version information
+  versions <- lapply(data$hits$hits, function(hit) {
+    meta <- hit$metadata
+    version <- meta$version
+    if (is.null(version)) {
+      version <- meta$publication_date
+    }
+    
+    data.frame(
+      id = as.character(hit$id),
+      version = version,
+      doi = meta$doi,
+      date = meta$publication_date,
+      stringsAsFactors = FALSE
+    )
+  })
+  
+  # combine into data frame
+  versions_df <- do.call(rbind, versions)
+  
+  # sort by date descending (most recent first)
+  versions_df <- versions_df[order(versions_df$date, decreasing = TRUE), ]
+  
+  return(versions_df)
+}
+
 #' Resolve a Zenodo version
 #'
 #' Given a concept DOI, finds the specific version tag. If "latest" is requested,
@@ -9,7 +85,6 @@
 #' @param max_attempts Integer, maximum number of retry attempts for Zenodo API calls. Default is 15.
 #' @return Character string with the resolved version tag.
 #' @keywords internal
-#' @importFrom zen4R get_versions
 #' @importFrom dplyr arrange desc slice pull
 #' @importFrom cli cli_abort cli_alert_warning
 #' @noRd
@@ -20,7 +95,7 @@ resolve_zenodo_version <- function(zenodo_doi, version = "latest", sandbox = FAL
   
   while (attempt <= max_attempts) {
     tryCatch({
-      data_versions <- suppressMessages(zen4R::get_versions(zenodo_doi, sandbox = sandbox))
+      data_versions <- get_zenodo_versions(zenodo_doi, sandbox = sandbox)
       
       # verify we got valid data
       if (is.data.frame(data_versions) && nrow(data_versions) > 0) {
@@ -40,7 +115,7 @@ resolve_zenodo_version <- function(zenodo_doi, version = "latest", sandbox = FAL
   if (is.null(data_versions) || nrow(data_versions) == 0) {
     cli::cli_abort("Failed to retrieve versions from Zenodo for DOI {zenodo_doi} after {max_attempts} attempts")
   }
-
+  
   if (version == "latest") {
     latest_version_tag <- data_versions |>
       dplyr::arrange(dplyr::desc(date)) |>
@@ -70,8 +145,7 @@ resolve_zenodo_version <- function(zenodo_doi, version = "latest", sandbox = FAL
 #' @param max_attempts Integer, maximum number of retry attempts for Zenodo API calls. Default is 15.
 #' @return Character string with path to downloaded file
 #' @keywords internal
-#' @importFrom zen4R get_versions
-#' @importFrom cli cli_abort
+#' @importFrom cli cli_abort cli_alert_warning
 #' @noRd
 download_from_zenodo <- function(zenodo_doi,
                                  dataset_id,
@@ -80,7 +154,7 @@ download_from_zenodo <- function(zenodo_doi,
                                  sandbox = FALSE,
                                  dest_path = NULL,
                                  max_attempts = 15) {
-
+  
   # get available versions to find the record ID for the specific version
   # use retry logic for api stability
   attempt <- 1
@@ -88,7 +162,7 @@ download_from_zenodo <- function(zenodo_doi,
   
   while (attempt <= max_attempts) {
     tryCatch({
-      data_versions <- suppressMessages(zen4R::get_versions(zenodo_doi, sandbox = sandbox))
+      data_versions <- get_zenodo_versions(zenodo_doi, sandbox = sandbox)
       
       if (is.data.frame(data_versions) && nrow(data_versions) > 0) {
         break
@@ -107,30 +181,30 @@ download_from_zenodo <- function(zenodo_doi,
   if (is.null(data_versions) || nrow(data_versions) == 0) {
     cli::cli_abort("Failed to retrieve versions from Zenodo for DOI {zenodo_doi} after {max_attempts} attempts")
   }
-
+  
   version_match <- data_versions[data_versions$version == version, ]
   if (nrow(version_match) == 0) {
     available_versions <- paste(data_versions$version, collapse = ", ")
     cli::cli_abort("Version {version} not found. Available versions: {available_versions}")
   }
-
-  specific_version_doi <- version_match$doi
-
-  # extract record ID from DOI and construct filename
-  record_id <- sub(".*zenodo\\.", "", specific_version_doi)
+  
+  # get the specific record ID for this version
+  specific_record_id <- version_match$id[1]
+  
+  # construct filename
   filename <- paste0(dataset_id, "_", author_name, "_ts.tsv")
-
+  
   if (isTRUE(sandbox)) {
-    download_url <- paste0("https://sandbox.zenodo.org/records/", record_id, "/files/", filename)
+    download_url <- paste0("https://sandbox.zenodo.org/records/", specific_record_id, "/files/", filename)
   } else {
-    download_url <- paste0("https://zenodo.org/records/", record_id, "/files/", filename)
+    download_url <- paste0("https://zenodo.org/records/", specific_record_id, "/files/", filename)
   }
-
+  
   if (is.null(dest_path)) {
     dest_path <- filename
   }
-
+  
   download_with_progress(download_url, dest_path)
-
+  
   return(dest_path)
 }
