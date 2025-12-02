@@ -176,6 +176,7 @@ download_with_progress <- function(url, destfile) {
   
   tryCatch({
     response <- httr2::request(url) |>
+      httr2::req_retry(max_tries = 5) |>
       httr2::req_progress() |>
       httr2::req_perform()
     
