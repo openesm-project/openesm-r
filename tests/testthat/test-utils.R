@@ -173,4 +173,85 @@ test_that("get_cache_dir creates nested directories correctly", {
 })
 
 
+test_that("process_specific_metadata handles complete metadata correctly", {
+  # Create a mock raw list similar to what jsonlite produces
+  raw_meta <- list(
+    dataset_id = "0001",
+    first_author = "Smith",
+    year = 2020,
+    n_participants = 50,
+    topics = list("anxiety", "depression"), # List that needs collapsing
+    features = list(
+      list(name = "mood", type = "integer"),
+      list(name = "context", type = "string")
+    )
+  )
+
+  # Call the internal function
+  result <- openesm:::process_specific_metadata(raw_meta)
+
+  # Check basic fields
+  expect_s3_class(result, "tbl_df")
+  expect_equal(nrow(result), 1)
+  expect_equal(result$dataset_id, "0001")
+  expect_equal(result$first_author, "Smith")
+  
+  # Check type conversion (year and n_participants)
+  expect_type(result$year, "double")
+  expect_equal(result$year, 2020L)
+  expect_type(result$n_participants, "double")
+  expect_equal(result$n_participants, 50L)
+
+  # Check list collapsing logic
+  expect_equal(result$topics, "anxiety, depression")
+
+  # Check nested features tibble
+  expect_type(result$features, "list")
+  expect_s3_class(result$features[[1]], "tbl_df")
+  expect_equal(nrow(result$features[[1]]), 2)
+})
+
+test_that("process_specific_metadata handles missing or NULL values", {
+  # Minimal input
+  raw_meta <- list(
+    dataset_id = "0002"
+    # Missing other fields
+  )
+
+  result <- openesm:::process_specific_metadata(raw_meta)
+
+  expect_equal(result$dataset_id, "0002")
+  
+  # Check that missing character fields are NA_character_
+  expect_true(is.na(result$first_author))
+  expect_type(result$first_author, "character")
+
+  # Check that missing integer fields are NA_integer_
+  expect_true(is.na(result$n_participants))
+  expect_type(result$n_participants, "integer")
+  
+  # Check empty features
+  expect_equal(nrow(result$features[[1]]), 0)
+})
+
+test_that("read_json_safe throws informative error on invalid JSON", {
+  # Create a dummy file with bad JSON
+  tmp <- tempfile()
+  writeLines("{ bad_json: ", tmp)
+  
+  expect_error(
+    openesm:::read_json_safe(tmp),
+    "Failed to read JSON file"
+  )
+  
+  unlink(tmp)
+})
+
+test_that("read_json_safe throws error on non-existent file", {
+  expect_error(
+    openesm:::read_json_safe("non_existent_file.json"),
+    "Failed to read JSON file"
+  )
+})
+
 
