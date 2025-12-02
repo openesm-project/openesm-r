@@ -348,6 +348,7 @@ download_metadata_from_zenodo <- function(version = "latest", dest_dir, sandbox 
   
   # fetch record details to get file list
   response <- httr2::request(api_url) |>
+    httr2::req_retry(max_tries = 5) |>
     httr2::req_perform()
     
   if (httr2::resp_status(response) != 200) {
