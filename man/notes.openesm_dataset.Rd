@@ -19,7 +19,15 @@ Get additional notes for dataset
 }
 \examples{
 \donttest{
-dataset <- get_dataset("0001")
+dataset <- structure(
+  list(
+    dataset_id = "0001",
+    metadata = list(
+      additional_comments = "Note about timing; Note about exclusions"
+    )
+  ),
+  class = "openesm_dataset"
+)
 notes(dataset)
 }
 }

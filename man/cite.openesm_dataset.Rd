@@ -21,7 +21,16 @@ Get citation information for dataset
 }
 \examples{
 \donttest{
-dataset <- get_dataset("0001")
+# Minimal object to demonstrate the method (no API call)
+dataset <- structure(
+  list(
+    dataset_id = "0001",
+    metadata = list(
+      reference_a = "@article{fried2022, author = {Fried}, year = {2022}}"
+    )
+  ),
+  class = "openesm_dataset"
+)
 cite(dataset)
 }
 }
