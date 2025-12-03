@@ -97,7 +97,16 @@ print.openesm_dataset_list <- function(x, ...) {
 #' @return Character string with citation information, returned invisibly.
 #' @examples
 #' \donttest{
-#' dataset <- get_dataset("0001")
+#' # Minimal object to demonstrate the method (no API call)
+#' dataset <- structure(
+#'   list(
+#'     dataset_id = "0001",
+#'     metadata = list(
+#'       reference_a = "@article{fried2022, author = {Fried}, year = {2022}}"
+#'     )
+#'   ),
+#'   class = "openesm_dataset"
+#' )
 #' cite(dataset)
 #' }
 #' @importFrom cli cli_abort cli_alert_info cli_text cli_code
@@ -152,7 +161,15 @@ cite.openesm_dataset <- function(x, format = "bibtex", ...) {
 #' @return Character vector with dataset notes, returned invisibly.
 #' @examples
 #' \donttest{
-#' dataset <- get_dataset("0001")
+#' dataset <- structure(
+#'   list(
+#'     dataset_id = "0001",
+#'     metadata = list(
+#'       additional_comments = "Note about timing; Note about exclusions"
+#'     )
+#'   ),
+#'   class = "openesm_dataset"
+#' )
 #' notes(dataset)
 #' }
 #' @importFrom cli cli_h1 cli_bullets cli_alert_info
