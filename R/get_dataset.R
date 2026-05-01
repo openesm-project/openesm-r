@@ -121,6 +121,9 @@ get_dataset <- function(dataset_id,
   dataset_info <- all_datasets[all_datasets[["dataset_id"]] == dataset_id, ]
   
   author_lower <- tolower(dataset_info$first_author)
+  author_lower <- gsub("\u00f6", "oe", author_lower, fixed = TRUE)
+  author_lower <- gsub("\u00e4", "ae", author_lower, fixed = TRUE)
+  author_lower <- gsub("\u00fc", "ue", author_lower, fixed = TRUE)
   # remove whitespace
   author_lower <- gsub(" ", "", author_lower)
   
