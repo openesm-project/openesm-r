@@ -208,8 +208,13 @@ get_dataset <- function(dataset_id,
     class = "openesm_dataset"
   )
   
-  # explicitly print upon download, unless silenced
   if (!quiet) {
+    repro_call <- paste0(
+      'get_dataset("', dataset_id, '", ',
+      'metadata_version = "', resolved_metadata_version, '", ',
+      'version = "', actual_version, '")'
+    )
+    cli::cli_inform("For full reproducibility, use:\n{repro_call}")
     print(dataset)
   }
   
@@ -240,7 +245,24 @@ get_multiple_datasets <- function(dataset_ids,
                                   force_download,
                                   sandbox,
                                   max_attempts,
+                                  quiet = FALSE,
                                   ...) {
+  n <- length(dataset_ids)
+
+  if (length(version) == 1) {
+    # warn only when the user explicitly pinned a version (recycling "latest" is expected)
+    if (version != "latest") {
+      cli::cli_warn(
+        "Recycling {.val {version}} across all {n} datasets. Pass a vector of versions to pin each dataset individually."
+      )
+    }
+    version <- rep(version, n)
+  } else if (length(version) != n) {
+    cli::cli_abort(
+      "{.arg version} must be length 1 or the same length as {.arg dataset_id} ({n}), not {length(version)}."
+    )
+  }
+
   result <- list()
   for (id in dataset_ids) {
     # call get_dataset in 'quiet' mode to suppress individual prints
@@ -255,11 +277,25 @@ get_multiple_datasets <- function(dataset_ids,
       ...
     )
   }
-  # assign a special class to the list for custom printing
+
   result <- structure(result, class = c("openesm_dataset_list", "list"))
   
-  # explicitly print the summary for the user
+  if (!quiet) {
+    # build reproducibility message using resolved versions from each downloaded dataset
+    resolved_ids      <- vapply(result, \(d) d$dataset_id, character(1))
+    resolved_dv       <- vapply(result, \(d) d$dataset_version, character(1))
+    resolved_mv       <- result[[1]]$metadata_version  # same for all (single metadata_version per call)
+
+    ids_r   <- paste0('c("', paste(resolved_ids, collapse = '", "'), '")')
+    dvs_r   <- paste0('c("', paste(resolved_dv,  collapse = '", "'), '")')
+    repro_call <- paste0(
+      "get_dataset(", ids_r, ",\n",
+      '            metadata_version = "', resolved_mv, '",\n',
+      "            version = ", dvs_r, ")"
+    )
+    cli::cli_inform("For full reproducibility, use:\n{repro_call}")
   print(result)
+  }
   
   return(invisible(result))
 }
