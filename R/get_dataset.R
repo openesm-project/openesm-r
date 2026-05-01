@@ -46,7 +46,7 @@
 #' [list_datasets()] for available datasets,
 #' [cite()] for citation information
 #'
-#' @importFrom cli cli_abort cli_alert_success
+#' @importFrom cli cli_abort cli_alert_success cli_inform cli_warn
 #' @importFrom readr read_tsv
 #' @importFrom fs file_exists path
 #'
@@ -98,7 +98,7 @@ get_dataset <- function(dataset_id,
                         ...) {
   # handle multiple datasets
   if (length(dataset_id) > 1) {
-    return(get_multiple_datasets(dataset_id, version, cache, force_download, sandbox, max_attempts, ...))
+    return(get_multiple_datasets(dataset_id, version, cache, force_download, sandbox, max_attempts, quiet = quiet, ...))
   }
   
   # remove all non-numeric characters from dataset_id
@@ -156,9 +156,14 @@ get_dataset <- function(dataset_id,
     cli::cli_abort("No Zenodo DOI found in metadata for dataset {dataset_id}")
   }
   
-  # resolve actual version if "latest" is requested
+  # resolve actual version and look up the version-specific DOI
   actual_version <- resolve_zenodo_version(zenodo_doi, version, sandbox, max_attempts = max_attempts)
-  
+  all_versions <- get_zenodo_versions(zenodo_doi, sandbox = sandbox)
+  version_doi <- all_versions$doi[all_versions$version == actual_version][1]
+  if (is.na(version_doi) || is.null(version_doi)) {
+    cli::cli_abort("Could not resolve version-specific DOI for dataset {dataset_id} version {actual_version}")
+  }
+
   # determine cache/destination path
   filename <- paste0(dataset_id, "_", author_lower, "_ts.tsv")
   if (is.null(path)) {
@@ -179,13 +184,11 @@ get_dataset <- function(dataset_id,
   # download from Zenodo if needed
   if (!fs::file_exists(local_data_path) || force_download) {
     download_from_zenodo(
-      zenodo_doi = zenodo_doi,
+      version_doi = version_doi,
       dataset_id = dataset_id,
       author_name = author_lower,
-      version = actual_version,
       sandbox = sandbox,
-      dest_path = local_data_path,
-      max_attempts = max_attempts
+      dest_path = local_data_path
     )
   }
   
@@ -217,7 +220,7 @@ get_dataset <- function(dataset_id,
     cli::cli_inform("For full reproducibility, use:\n{repro_call}")
     print(dataset)
   }
-  
+
   return(invisible(dataset))
 }
 
@@ -264,11 +267,10 @@ get_multiple_datasets <- function(dataset_ids,
   }
 
   result <- list()
-  for (id in dataset_ids) {
-    # call get_dataset in 'quiet' mode to suppress individual prints
-    result[[id]] <- get_dataset(
-      id,
-      version = version,
+  for (i in seq_along(dataset_ids)) {
+    result[[dataset_ids[[i]]]] <- get_dataset(
+      dataset_ids[[i]],
+      version = version[[i]],
       cache = cache,
       force_download = force_download,
       sandbox = sandbox,
@@ -279,7 +281,7 @@ get_multiple_datasets <- function(dataset_ids,
   }
 
   result <- structure(result, class = c("openesm_dataset_list", "list"))
-  
+
   if (!quiet) {
     # build reproducibility message using resolved versions from each downloaded dataset
     resolved_ids      <- vapply(result, \(d) d$dataset_id, character(1))
@@ -294,8 +296,8 @@ get_multiple_datasets <- function(dataset_ids,
       "            version = ", dvs_r, ")"
     )
     cli::cli_inform("For full reproducibility, use:\n{repro_call}")
-  print(result)
+    print(result)
   }
-  
+
   return(invisible(result))
 }
