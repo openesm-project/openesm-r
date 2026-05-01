@@ -21,3 +21,4 @@
 ^LICENSE\.md$
 openesm-manual.tex^$
 ^CRAN-SUBMISSION$
+^\.claude$
