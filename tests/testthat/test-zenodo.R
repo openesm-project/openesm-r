@@ -18,33 +18,40 @@ test_that("resolve_zenodo_version works with a live sandbox request", {
   # test error for a non-existent version
   expect_error(
     resolve_zenodo_version(test_doi, version = "v9.9.9", sandbox = TRUE, max_attempts = 15),
-    "Version v9.9.9 not found"
+    "Version 9.9.9 not found"
   )
 })
 
-test_that("download_from_zenodo works with a live sandbox request", {
+test_that("download_from_zenodo constructs the correct URL and returns dest_path", {
   skip_on_cran()
   skip_on_ci()
-  # create a temporary file path for the download
+
   temp_dest <- tempfile(fileext = ".tsv")
-  
-  # perform the download using a version we know exists
+  captured_url <- NULL
+
+  testthat::local_mocked_bindings(
+    download_with_progress = function(url, dest_path) {
+      captured_url <<- url
+      file.create(dest_path)
+      invisible(dest_path)
+    },
+    .package = "openesm"
+  )
+
   result_path <- download_from_zenodo(
-    zenodo_doi = test_doi,
+    version_doi = "10.5072/zenodo.308201",
     dataset_id = "0001",
     author_name = "test",
-    version = "1.0.0",
     sandbox = TRUE,
-    dest_path = temp_dest,
-    max_attempts = 15
+    dest_path = temp_dest
   )
-  
-  # check that the file was downloaded and the path is correct
+
   expect_equal(result_path, temp_dest)
-  expect_true(file.exists(temp_dest))
-  expect_gt(file.info(temp_dest)$size, 0)
-  
-  # clean up the downloaded file
+  expect_equal(
+    captured_url,
+    "https://sandbox.zenodo.org/records/308201/files/0001_test_ts.tsv"
+  )
+
   unlink(temp_dest)
 })
 

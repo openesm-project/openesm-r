@@ -15,7 +15,14 @@ test_that("get_dataset downloads and processes a single dataset", {
       openesm:::process_raw_datasets_list(raw_list)
     },
     resolve_zenodo_version = function(doi, version, sandbox, max_attempts = 15) "1.0.0",
-    download_from_zenodo = function(..., dest_path, max_attempts = 15) {
+    get_zenodo_versions = function(zenodo_doi, sandbox = FALSE) {
+      data.frame(
+        id = "1234567", version = "1.0.0",
+        doi = "10.5281/zenodo.1234567", date = "2020-01-01",
+        stringsAsFactors = FALSE
+      )
+    },
+    download_from_zenodo = function(version_doi, dataset_id, author_name, sandbox = FALSE, dest_path = NULL) {
       file.copy(temp_data_file, dest_path)
       return(dest_path)
     },
@@ -77,11 +84,14 @@ test_that("get_multiple_datasets can be called explicitly", {
   
   testthat::local_mocked_bindings(
     get_dataset = function(dataset_id, ...) {
-      structure(list(dataset_id = dataset_id), class = "openesm_dataset")
+      structure(
+        list(dataset_id = dataset_id, dataset_version = "1.0.0", metadata_version = "1.0.0"),
+        class = "openesm_dataset"
+      )
     }
   )
   
-  datasets <- get_multiple_datasets(c("ds1", "ds2"))
+  datasets <- get_multiple_datasets(c("ds1", "ds2"), version = "latest")
   
   expect_s3_class(datasets, "openesm_dataset_list")
   expect_length(datasets, 2)
