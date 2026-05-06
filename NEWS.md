@@ -1,3 +1,14 @@
+# openesm 0.2.0
+
+## Bug fixes
+* Fixed a bug in `get_dataset()` where datasets with umlauts in their names were not being cached properly.
+
+## New features
+
+* `get_dataset()` now accepts a `version` vector when downloading multiple datasets, allowing each dataset to be pinned to a different version.
+* After a successful download, `get_dataset()` prints a reproducibility message
+
+
 # openesm 0.1.2
 
 ## Bug fixes

@@ -1,10 +1,11 @@
 ## Resubmission
-This is a resubmission fixing CRAN check NOTE about files left in temp directory. 
-Changes in version 0.1.1:
+This is a resubmission with new features for version 0.2.0.
 
-* Added `\dontshow{}` cleanup blocks in examples to remove cache files after execution
-* Examples now properly clean up all temporary files created during checks
+Changes in version 0.2.0:
 
+* `get_dataset()` now accepts a `version` vector for per-dataset version pinning when downloading multiple datasets.
+* Added reproducibility message after successful downloads.
+* Fixed a bug in `get_dataset()` where datasets with umlauts in their names were not being downloaded properly.
 
 ## R CMD check results
 
