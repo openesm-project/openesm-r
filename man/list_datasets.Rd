@@ -57,28 +57,25 @@ Use \code{cache_hours = 0} to force a fresh download of the index.
 
 The returned tibble can be filtered and explored to identify datasets of
 interest before downloading with \code{\link[=get_dataset]{get_dataset()}}.
+
+Requires an active internet connection. Download time depends on Zenodo
+availability and the size of the metadata archive.
 }
 \examples{
-\donttest{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # List all available datasets
 datasets <- list_datasets()
+head(datasets)
 
-# Force fresh download of index
+# Force a fresh download regardless of cache age
 fresh_list <- list_datasets(cache_hours = 0)
 
-# Use specific metadata version
+# Pin a specific metadata catalog version
 datasets_v1 <- list_datasets(metadata_version = "1.0.0")
 
-# Use dataset IDs with get_dataset()
+# Use the returned IDs with get_dataset()
 dataset <- get_dataset(datasets$dataset_id[1])
-
-\dontshow{
-# cleanup
-clear_cache(force = TRUE)
-}
-
-}
-
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=get_dataset]{get_dataset()}} to download specific datasets

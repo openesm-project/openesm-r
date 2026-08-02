@@ -42,6 +42,9 @@
 #' The function handles both individual datasets and batch downloads. When
 #' downloading multiple datasets, progress is shown for each download.
 #'
+#' Requires an active internet connection. Download time depends on Zenodo
+#' availability and dataset size.
+#'
 #' @seealso
 #' [list_datasets()] for available datasets,
 #' [cite()] for citation information
@@ -50,41 +53,28 @@
 #' @importFrom readr read_tsv
 #' @importFrom fs file_exists path
 #'
-#' @examples
-#' \donttest{
+#' @examplesIf interactive()
 #' # List available datasets first
 #' available <- list_datasets()
-#' head(available)
 #'
 #' # Download a single dataset
 #' dataset <- get_dataset("0001")
 #'
-#' # Access the data
+#' # Access the data and metadata
 #' head(dataset$data)
-#'
-#' # View metadata and provenance information
 #' dataset$metadata
-#' dataset$dataset_version  # Dataset version
-#' dataset$metadata_version # Metadata catalog version
+#' dataset$dataset_version
+#' dataset$metadata_version
 #'
-#' # Download multiple datasets
+#' # Download multiple datasets at once
 #' datasets <- get_dataset(c("0001", "0002"))
-#'
-#' # Access individual datasets from the list
 #' datasets[["0001"]]$data
 #'
-#' # Use specific metadata catalog version
+#' # Pin a specific metadata catalog version for reproducibility
 #' dataset_v1 <- get_dataset("0001", metadata_version = "1.0.0")
 #'
-#' # Force re-download to get latest version
+#' # Force re-download even if a cached copy exists
 #' dataset_fresh <- get_dataset("0001", force_download = TRUE)
-#'
-#' 
-#' \dontshow{
-#' # cleanup
-#' clear_cache(force = TRUE)
-#' }
-#' }
 #'
 #' @export
 get_dataset <- function(dataset_id,

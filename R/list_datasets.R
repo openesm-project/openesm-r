@@ -44,10 +44,13 @@
 #' The index is cached locally to avoid repeated downloads. 
 #' Use \code{cache_hours = 0} to force a fresh download of the index.
 #' 
-#' The returned tibble can be filtered and explored to identify datasets of 
+#' The returned tibble can be filtered and explored to identify datasets of
 #' interest before downloading with [get_dataset()].
 #'
-#' @seealso 
+#' Requires an active internet connection. Download time depends on Zenodo
+#' availability and the size of the metadata archive.
+#'
+#' @seealso
 #' [get_dataset()] to download specific datasets
 #'
 #' @importFrom fs file_exists dir_exists dir_create
@@ -56,26 +59,19 @@
 #' @importFrom tibble tibble
 #' @importFrom cli cli_abort
 #'
-#' @examples
-#' \donttest{
+#' @examplesIf interactive()
 #' # List all available datasets
 #' datasets <- list_datasets()
-#' 
-#' # Force fresh download of index
+#' head(datasets)
+#'
+#' # Force a fresh download regardless of cache age
 #' fresh_list <- list_datasets(cache_hours = 0)
-#' 
-#' # Use specific metadata version
+#'
+#' # Pin a specific metadata catalog version
 #' datasets_v1 <- list_datasets(metadata_version = "1.0.0")
-#' 
-#' # Use dataset IDs with get_dataset()
+#'
+#' # Use the returned IDs with get_dataset()
 #' dataset <- get_dataset(datasets$dataset_id[1])
-#' 
-#' \dontshow{
-#' # cleanup
-#' clear_cache(force = TRUE)
-#' }
-#' 
-#' }
 #'
 #' @export
 list_datasets <- function(cache_hours = 24,
