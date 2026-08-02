@@ -4,8 +4,15 @@
 #' @return Citation information for the dataset(s)
 #' @examples
 #' \donttest{
-#' # Get citation for a dataset
-#' dataset <- get_dataset("0001")
+#' dataset <- structure(
+#'   list(
+#'     dataset_id = "0001",
+#'     metadata = list(
+#'       reference_a = "@article{fried2022, author = {Fried}, year = {2022}}"
+#'     )
+#'   ),
+#'   class = "openesm_dataset"
+#' )
 #' cite(dataset)
 #' }
 #' @export
@@ -19,8 +26,15 @@ cite <- function(x, ...) {
 #' @return Additional notes and information about the dataset(s)
 #' @examples
 #' \donttest{
-#' # Get notes for a dataset
-#' dataset <- get_dataset("0001")
+#' dataset <- structure(
+#'   list(
+#'     dataset_id = "0001",
+#'     metadata = list(
+#'       additional_comments = "Note about timing; Note about exclusions"
+#'     )
+#'   ),
+#'   class = "openesm_dataset"
+#' )
 #' notes(dataset)
 #' }
 #' @export

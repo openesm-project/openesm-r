@@ -19,8 +19,15 @@ Citation information for openESM datasets
 }
 \examples{
 \donttest{
-# Get citation for a dataset
-dataset <- get_dataset("0001")
+dataset <- structure(
+  list(
+    dataset_id = "0001",
+    metadata = list(
+      reference_a = "@article{fried2022, author = {Fried}, year = {2022}}"
+    )
+  ),
+  class = "openesm_dataset"
+)
 cite(dataset)
 }
 }
