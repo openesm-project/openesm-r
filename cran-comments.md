@@ -1,14 +1,20 @@
 ## Resubmission
-This is a resubmission with new features for version 0.2.0.
 
-Changes in version 0.2.0:
+This is a resubmission addressing the note and error from the 0.2.0 check.
 
-* `get_dataset()` now accepts a `version` vector for per-dataset version pinning when downloading multiple datasets.
-* Added reproducibility message after successful downloads.
-* Fixed a bug in `get_dataset()` where datasets with umlauts in their names were not being downloaded properly.
+Changes in version 0.2.1:
+
+* Fixed NOTE "checking for new files in some other directories": examples that
+  call `list_datasets()` or `get_dataset()` are now guarded with
+  `@examplesIf interactive()`, preventing execution in non-interactive check
+  environments and eliminating writes to the user cache directory during checks.
+* Replaced live `get_dataset()` calls in the examples for `cite()`, `notes()`,
+  `print.openesm_dataset()`, and `print.openesm_dataset_list()` with minimal
+  mock objects.
+* `get_cache_dir()` now accepts a `create` argument; `cache_info()` and
+  `clear_cache()` pass `create = FALSE` so they no longer create the cache
+  directory as a side effect of inspecting it.
 
 ## R CMD check results
 
 0 errors ✔ | 0 warnings ✔ | 0 notes ✔
-
-

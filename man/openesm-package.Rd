@@ -21,6 +21,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Björn S. Siepe \email{bjoernsiepe@gmail.com} (\href{https://orcid.org/0000-0002-9558-4648}{ORCID}) [copyright holder]
   \item Matthias Kloft \email{kloft.dev@gmail.com} (\href{https://orcid.org/0000-0003-1845-6957}{ORCID})
 }
 
