@@ -8,7 +8,22 @@
 #' @importFrom cli cli_h1 cli_text cli_alert_info cli_bullets cli_div
 #' @examples
 #' \donttest{
-#' dataset <- get_dataset("0001")
+#' dataset <- structure(
+#'   list(
+#'     dataset_id = "0001",
+#'     dataset_version = "1.0.0",
+#'     metadata_version = "1.3.0",
+#'     metadata = list(
+#'       first_author = "Fried",
+#'       year = "2022",
+#'       paper_doi = "10.1234/example",
+#'       license = "CC-BY-4.0",
+#'       n_participants = 100L,
+#'       n_time_points = 70L
+#'     )
+#'   ),
+#'   class = "openesm_dataset"
+#' )
 #' print(dataset)
 #' }
 #' @export
@@ -53,7 +68,13 @@ print.openesm_dataset <- function(x, ...) {
 #' @importFrom cli cli_h1 cli_text cli_bullets cli_alert_info cli_div style_bold
 #' @examples
 #' \donttest{
-#' datasets <- get_dataset(c("0001", "0002"))
+#' datasets <- structure(
+#'   list(
+#'     "0001" = structure(list(dataset_id = "0001"), class = "openesm_dataset"),
+#'     "0002" = structure(list(dataset_id = "0002"), class = "openesm_dataset")
+#'   ),
+#'   class = c("openesm_dataset_list", "list")
+#' )
 #' print(datasets)
 #' }
 #' @export

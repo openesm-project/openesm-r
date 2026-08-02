@@ -19,7 +19,13 @@ Print method for a list of openesm_dataset objects
 }
 \examples{
 \donttest{
-datasets <- get_dataset(c("0001", "0002"))
+datasets <- structure(
+  list(
+    "0001" = structure(list(dataset_id = "0001"), class = "openesm_dataset"),
+    "0002" = structure(list(dataset_id = "0002"), class = "openesm_dataset")
+  ),
+  class = c("openesm_dataset_list", "list")
+)
 print(datasets)
 }
 }
