@@ -6,19 +6,21 @@
 #' @return Path to cache directory
 #' @keywords internal
 #' @noRd
-get_cache_dir <- function(type = NULL) {
-  # use tools::R_user_dir for standard R cache location
-  base_cache <- tools::R_user_dir("openesm", which = "cache")
-  
-  # if a type is specified, return the subdirectory
+get_cache_dir <- function(type = NULL, create = TRUE) {
+  # allow overriding via option (used in examples/tests to avoid writing to
+  # the user's home directory during R CMD check)
+  base_cache <- getOption(
+    "openesm.cache_dir",
+    tools::R_user_dir("openesm", which = "cache")
+  )
+
   if (!is.null(type)) {
     cache_dir <- fs::path(base_cache, type)
   } else {
     cache_dir <- base_cache
   }
-  
-  # ensure directory exists
-  if (!fs::dir_exists(cache_dir)) {
+
+  if (create && !fs::dir_exists(cache_dir)) {
     fs::dir_create(cache_dir, recurse = TRUE)
   }
   return(cache_dir)
@@ -30,15 +32,23 @@ get_cache_dir <- function(type = NULL) {
 #'
 #' @return Invisibly returns \code{NULL}.
 #' @examples
+#' \dontshow{
+#' .tmp_cache <- tempfile("openesm_ex_")
+#' .old <- options(openesm.cache_dir = .tmp_cache)
+#' }
 #' \donttest{
 #' # view cache information
 #' cache_info()
+#' }
+#' \dontshow{
+#' options(.old)
+#' unlink(.tmp_cache, recursive = TRUE)
 #' }
 #' @importFrom cli cli_alert_info
 #' @importFrom fs dir_exists dir_info fs_bytes
 #' @export
 cache_info <- function() {
-  cache_dir <- get_cache_dir()
+  cache_dir <- get_cache_dir(create = FALSE)
   if (!fs::dir_exists(cache_dir)) {
     cli::cli_alert_info("Cache directory does not exist yet.")
     cli::cli_alert_info("It will be created at: {.path {cache_dir}}")
@@ -60,21 +70,29 @@ cache_info <- function() {
 #'   deleting. Default is \code{FALSE}.
 #' @return Invisibly returns \code{NULL}.
 #' @examples
+#' \dontshow{
+#' .tmp_cache <- tempfile("openesm_ex_")
+#' .old <- options(openesm.cache_dir = .tmp_cache)
+#' }
 #' \donttest{
 #' # clear cache with confirmation prompt
-#' if(interactive()) {
-#'  clear_cache()
+#' if (interactive()) {
+#'   clear_cache()
 #' }
-#' 
+#'
 #' # force clear without confirmation
 #' clear_cache(force = TRUE)
+#' }
+#' \dontshow{
+#' options(.old)
+#' unlink(.tmp_cache, recursive = TRUE)
 #' }
 #' @importFrom cli cli_abort cli_alert_info cli_alert_success
 #' @importFrom fs dir_exists
 #' @importFrom utils askYesNo
 #' @export
 clear_cache <- function(force = FALSE) {
-  cache_dir <- get_cache_dir()
+  cache_dir <- get_cache_dir(create = FALSE)
   if (!fs::dir_exists(cache_dir)) {
     cli::cli_alert_info("Cache directory does not exist. Nothing to clear.")
     return(invisible(NULL))

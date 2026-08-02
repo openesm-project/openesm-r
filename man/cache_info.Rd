@@ -13,8 +13,16 @@ Invisibly returns \code{NULL}.
 Shows the location and total size of the local file cache.
 }
 \examples{
+\dontshow{
+.tmp_cache <- tempfile("openesm_ex_")
+.old <- options(openesm.cache_dir = .tmp_cache)
+}
 \donttest{
 # view cache information
 cache_info()
+}
+\dontshow{
+options(.old)
+unlink(.tmp_cache, recursive = TRUE)
 }
 }

@@ -60,9 +60,9 @@ test_that("cache_info works when cache exists", {
   writeLines("some data", file.path(temp_dir, "dummy.txt"))
   
   testthat::local_mocked_bindings(
-    get_cache_dir = function() temp_dir
+    get_cache_dir = function(type = NULL, create = TRUE) temp_dir
   )
-  
+
   # Capture the output and check for expected messages
   output <- cli::cli_fmt(cache_info())
   expect_true(any(grepl("Cache location:", output)))
@@ -74,9 +74,9 @@ test_that("cache_info works when cache exists", {
 test_that("cache_info works when cache does not exist", {
   temp_dir <- tempfile("nonexistent")
   testthat::local_mocked_bindings(
-    get_cache_dir = function() temp_dir
+    get_cache_dir = function(type = NULL, create = TRUE) temp_dir
   )
-  
+
   # Capture the output and check for the specific message
   output <- cli::cli_fmt(cache_info())
   expect_true(any(grepl("Cache directory does not exist yet", output)))
@@ -88,9 +88,9 @@ test_that("clear_cache works non-interactively with force = TRUE", {
   writeLines("test", file.path(temp_dir, "file.txt"))
   
   testthat::local_mocked_bindings(
-    get_cache_dir = function() temp_dir
+    get_cache_dir = function(type = NULL, create = TRUE) temp_dir
   )
-  
+
   expect_true(fs::dir_exists(temp_dir))
   
   # Capture output and check for success message
@@ -102,9 +102,9 @@ test_that("clear_cache works non-interactively with force = TRUE", {
 
 test_that("clear_cache handles non-existent directory gracefully", {
   testthat::local_mocked_bindings(
-    get_cache_dir = function() tempfile("nonexistent")
+    get_cache_dir = function(type = NULL, create = TRUE) tempfile("nonexistent")
   )
-  
+
   # Capture output and check for the correct informational message
   output <- cli::cli_fmt(clear_cache(force = TRUE))
   expect_true(any(grepl("Cache directory does not exist", output)))
@@ -129,30 +129,36 @@ test_that("read_json_safe handles errors correctly", {
 })
 
 test_that("get_cache_dir returns correct path without type parameter", {
-  # test basic functionality
+  tmp <- tempfile("openesm_test_")
+  old <- options(openesm.cache_dir = tmp)
+  on.exit(options(old), add = TRUE)
+  on.exit(unlink(tmp, recursive = TRUE), add = TRUE)
+
   cache_dir <- get_cache_dir()
   expect_type(cache_dir, "character")
-  
-  expect_true(grepl("openesm", cache_dir))
-  
-  # directory should exist after calling the function
+  expect_true(grepl("openesm_test_", cache_dir))
   expect_true(fs::dir_exists(cache_dir))
 })
 
 test_that("get_cache_dir returns correct path with type parameter", {
+  tmp <- tempfile("openesm_test_")
+  old <- options(openesm.cache_dir = tmp)
+  on.exit(options(old), add = TRUE)
+  on.exit(unlink(tmp, recursive = TRUE), add = TRUE)
+
   # test with a type parameter
   cache_dir <- get_cache_dir(type = "datasets")
-  
+
   # should be a character string
   expect_type(cache_dir, "character")
-  
-  # should contain both "openesm" and "datasets" in the path
-  expect_true(grepl("openesm", cache_dir))
+
+  # should contain both the temp prefix and "datasets" in the path
+  expect_true(grepl("openesm_test_", cache_dir))
   expect_true(grepl("datasets", cache_dir))
-  
+
   # directory should exist after calling the function
   expect_true(fs::dir_exists(cache_dir))
-  
+
   # test with another type
   cache_dir_meta <- get_cache_dir(type = "metadata")
   expect_true(grepl("metadata", cache_dir_meta))
@@ -160,16 +166,41 @@ test_that("get_cache_dir returns correct path with type parameter", {
 })
 
 test_that("get_cache_dir creates nested directories correctly", {
+  tmp <- tempfile("openesm_test_")
+  old <- options(openesm.cache_dir = tmp)
+  on.exit(options(old), add = TRUE)
+  on.exit(unlink(tmp, recursive = TRUE), add = TRUE)
+
   # test with nested path
   cache_dir <- get_cache_dir(type = "deep/nested/path")
-  
+
   # should contain the nested structure
   expect_true(grepl("deep", cache_dir))
   expect_true(grepl("nested", cache_dir))
   expect_true(grepl("path", cache_dir))
-  
+
   # directory should exist
   expect_true(fs::dir_exists(cache_dir))
+})
+
+test_that("cache_info does not create the cache directory", {
+  tmp <- tempfile("openesm_test_")
+  old <- options(openesm.cache_dir = tmp)
+  on.exit(options(old), add = TRUE)
+
+  expect_false(fs::dir_exists(tmp))
+  cache_info()
+  expect_false(fs::dir_exists(tmp))
+})
+
+test_that("clear_cache does not create the cache directory", {
+  tmp <- tempfile("openesm_test_")
+  old <- options(openesm.cache_dir = tmp)
+  on.exit(options(old), add = TRUE)
+
+  expect_false(fs::dir_exists(tmp))
+  clear_cache(force = TRUE)
+  expect_false(fs::dir_exists(tmp))
 })
 
 

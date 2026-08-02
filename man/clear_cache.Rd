@@ -17,13 +17,21 @@ Invisibly returns \code{NULL}.
 Removes all cached openesm data from your local machine.
 }
 \examples{
+\dontshow{
+.tmp_cache <- tempfile("openesm_ex_")
+.old <- options(openesm.cache_dir = .tmp_cache)
+}
 \donttest{
 # clear cache with confirmation prompt
-if(interactive()) {
- clear_cache()
+if (interactive()) {
+  clear_cache()
 }
 
 # force clear without confirmation
 clear_cache(force = TRUE)
+}
+\dontshow{
+options(.old)
+unlink(.tmp_cache, recursive = TRUE)
 }
 }
